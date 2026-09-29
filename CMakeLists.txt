@@ -40,12 +40,7 @@ if(${ENABLE_STAMP_WITH_LOCAL})
 endif(${ENABLE_STAMP_WITH_LOCAL})
 
 
-option(ENABLE_SOURCE_PACKET_LEGACY "Enable ROS Source of MSOP/DIFOP Packet v1.3.x" OFF)
-if(${ENABLE_SOURCE_PACKET_LEGACY})
-  add_definitions("-DENABLE_SOURCE_PACKET_LEGACY")
-endif(${ENABLE_SOURCE_PACKET_LEGACY})
-
-option(ENABLE_IMU_DATA_PARSE           "Enable imu data parse" OFF)
+option(ENABLE_IMU_DATA_PARSE           "Enable imu data parse" ON)
 if(${ENABLE_IMU_DATA_PARSE})
 
   message(=============================================================)
@@ -92,62 +87,17 @@ message(=============================================================)
 # Dependencies Setup
 #========================
 
-#ROS#
-find_package(roscpp 1.12 QUIET)
-
-if(roscpp_FOUND)
-
-  message(=============================================================)
-  message("-- ROS Found. ROS Support is turned On.")
-  message(=============================================================)
-
-  add_definitions(-DROS_FOUND)
-
-  find_package(roslib QUIET)
-  include_directories(${roscpp_INCLUDE_DIRS} ${roslib_INCLUDE_DIRS})
-  set(ROS_LIBS ${roscpp_LIBRARIES} ${roslib_LIBRARIES})
-
-  add_definitions(-DRUN_IN_ROS_WORKSPACE)
-
-  find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    sensor_msgs
-    roslib)
-
-  catkin_package(CATKIN_DEPENDS 
-    sensor_msgs 
-    roslib)
-
-else(roscpp_FOUND)
-
-  message(=============================================================)
-  message("-- ROS Not Found. ROS Support is turned Off.")
-  message(=============================================================)
-
-endif(roscpp_FOUND)
-
 #ROS2#
-find_package(rclcpp QUIET)
+find_package(rclcpp REQUIRED)
 
-if(rclcpp_FOUND)
-  message(=============================================================)
-  message("-- ROS2 Found. ROS2 Support is turned On.")
-  message(=============================================================)
+add_definitions(-DROS2_FOUND)
+include_directories(${rclcpp_INCLUDE_DIRS})
+set(CMAKE_CXX_STANDARD 14)
 
-  add_definitions(-DROS2_FOUND)
-  include_directories(${rclcpp_INCLUDE_DIRS})
-  set(CMAKE_CXX_STANDARD 14)
-
-  find_package(ament_cmake REQUIRED)
-  find_package(sensor_msgs REQUIRED)
-  find_package(rslidar_msg REQUIRED)
-  find_package(std_msgs REQUIRED)                      
-
-else(rclcpp_FOUND)
-  message(=============================================================)
-  message("-- ROS2 Not Found. ROS2 Support is turned Off.")
-  message(=============================================================)
-endif(rclcpp_FOUND)
+find_package(ament_cmake REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(rslidar_msg REQUIRED)
+find_package(std_msgs REQUIRED)
 
 #Others#
 find_package(yaml-cpp REQUIRED)
@@ -172,38 +122,21 @@ target_link_libraries(rslidar_sdk_node
                       ${YAML_CPP_LIBRARIES}
                       ${rs_driver_LIBRARIES})
 
-#Ros#
-if(roscpp_FOUND)
+ament_target_dependencies(rslidar_sdk_node 
+  rclcpp 
+  std_msgs 
+  sensor_msgs 
+  rslidar_msg)
 
-  target_link_libraries(rslidar_sdk_node 
-    ${ROS_LIBS})
+install(TARGETS
+  rslidar_sdk_node
+  DESTINATION lib/${PROJECT_NAME})
 
-  install(TARGETS rslidar_sdk_node
-          RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-          LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-          ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+install(DIRECTORY
+  launch
+  rviz
+  config
+  DESTINATION share/${PROJECT_NAME})
 
-endif(roscpp_FOUND)
-
-#Ros2#
-if(rclcpp_FOUND)
-
-  ament_target_dependencies(rslidar_sdk_node 
-    rclcpp 
-    std_msgs 
-    sensor_msgs 
-    rslidar_msg)
-
-  install(TARGETS
-    rslidar_sdk_node
-    DESTINATION lib/${PROJECT_NAME})
-
-  install(DIRECTORY
-    launch
-    rviz
-    DESTINATION share/${PROJECT_NAME})
-
-  ament_package()
-
-endif(rclcpp_FOUND)
+ament_package()
 
