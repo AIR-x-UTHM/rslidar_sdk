@@ -5,7 +5,9 @@ project(rslidar_sdk)
 #=======================================
 # Custom Point Type (XYZI,XYZIRT, XYZIF, XYZIRTF)
 #=======================================
-set(POINT_TYPE XYZI)
+# XYZIRT adds ring (uint16) + timestamp (float64) per point, which Point-LIO
+# needs for per-point deskewing. See point_lio/config/rslidar_airy.yaml.
+set(POINT_TYPE XYZIRT)
 
 option(ENABLE_TRANSFORM "Enable transform functions" OFF)
 if(${ENABLE_TRANSFORM})
